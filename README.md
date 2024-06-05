@@ -8,11 +8,11 @@ Issue: TBD
 
 ## Introduction to the problem
 
-Focus navigation is the mechanism that allows users to navigate and access the contents of a website using their keyboard. Currently, this navigation follows the source order aka the order the elements are defined in the DOM tree. This causes a disconnect when the elements are displayed in a different order, using a flexbox or grid layout, where the visual reading order can be different to the underlying source order using features like the `order` property.
+Focus navigation is the mechanism that allows users to navigate and access the contents of a website using their keyboard. Currently, this navigation follows the source order, aka the order the elements are defined in the DOM tree. This causes a disconnect when the elements are displayed in a different order, using a flexbox or grid layout, where the visual reading order can be different from the underlying source order using features like the `order` property.
 
-The CSS Working Group proposed to solve this problem using the [new CSS property reading-order-items](https://drafts.csswg.org/css-display-4/#propdef-reading-order). This property allows users to choose how items within a flex or grid container should be read. In this explainer, we are proposing changes to the WHATWG specifications to support this new property for sequential focus navigation. Namely, we propose adding a new focus scope owner and more steps to the sequential navigation search algorithm.
+The CSS Working Group proposed to solve this problem using the [new CSS property reading-order-items](https://drafts.csswg.org/css-display-4/#propdef-reading-order). This property allows developers to specify how items within a flex or grid container should be read. In this explainer, we are proposing changes to the WHATWG specifications to support this new property for sequential focus navigation. Namely, we propose adding a new focus scope owner and more steps to the sequential navigation search algorithm.
 
-Note this feature will become even more valuable in the upcoming CSS Masonry, which uses an automatic layout method in which items are displayed in a hard-to-predict order.
+Note this feature will become even more valuable in the upcoming CSS Masonry, which uses an automatic layout method in which items are displayed in a harder-to-predict order.
 
 ## New specifications in WHATWG
 
@@ -33,7 +33,7 @@ _A node is a focus navigation scope owner if it is a Document, a shadow host, a 
 
 Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 2 and before the existing step 3:
 
-_3. If element’s layout parent is a reading order container, then return the reading order container element._
+_2.5. If element’s layout parent is a reading order container, then return the reading order container element._
 
 ### Changes to `sequential navigation search algorithm`
 
@@ -41,15 +41,15 @@ _3. If element’s layout parent is a reading order container, then return the r
 
 Add new steps after existing step 1 and before the existing step 2:
 
-1.5. If _candidate_ is a **reading order item** or null, _direction_ is "forward" and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _candidate_, _direction_ and _scope_.
+1.5. If _candidate_ is a **reading order item** or null, _direction_ is "forward", and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _candidate_, _direction_ and _scope_.
 
-If _starting point_ is a **reading order item**, _direction_ is "backward" and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let the _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _starting point_, _direction_ and starting point’s focus navigation _scope_.
+If _starting point_ is a **reading order item**, _direction_ is "backward", and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let the _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _starting point_, _direction_ and _starting point_’s focus navigation _scope_.
 
 If _new candidate_ is null, then let _starting point_ be _candidate_, and return to step 1 of this algorithm. Otherwise, let _candidate_ be _new candidate_.
 
 #### reading order sequential navigation search algorithm
 
-To **find the next item in reading order**, given a reading order item _current_, a direction _direction_ and a reading ordered focus navigation scope _scope_, perform the following steps. They return an element.
+To **find the next item in reading order**, given a reading order item _current_, a direction _direction_ and a reading ordered focus navigation scope _scope_, perform the following steps. They return an Element.
 
 1. Let _reading order items_ be the list of reading order items owned by _scope_, sorted in **reading order**.
 2. If _reading order items_ is empty, return null.
@@ -74,33 +74,19 @@ The order within a [tabindex-ordered focus navigation scope](https://html.spec.w
 
 to
 
-The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and, for reading-ordered focus navigation scopes, by the special rules provided by the **sequential navigation search algorithm**. Note tabindex takes precedence over **reading order**.
+The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and, for reading-ordered focus navigation scopes, by the special rules provided by the **sequential navigation search algorithm**. Note: tabindex takes precedence over **reading order**.
 
 ### Add new section 6.6.N The Reading Order
 
 A **reading-ordered focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading order container.
 
-The **reading order** for a **reading-ordered focus navigation scope** is determined by the container’s [reading-order-items](https://drafts.csswg.org/css-display-4/#propdef-reading-order-items) value.
+The **reading order** for a **reading-ordered focus navigation scope** is determined by the container’s [reading-order-items](https://drafts.csswg.org/css-display-4/#propdef-reading-order-items) value:
 
-If the value is flex-visual,
-
-- The reading order should be defined by the flex items, sorted in the visual reading order and taking the writing mode into account.
-
-If the value is flex-flow
-
-- The reading order should be defined by the flex items, sorted by the CSS ‘flex-flow’ direction.
-
-If the value is grid-rows,
-
-- The reading order should be defined by the grid items, sorted first by their displayed row order, and then by their column order, taking the writing mode into account.
-
-If the value is grid-columns,
-
-- The reading order should be defined by the grid items, sorted first by their displayed column order, and then by their row order, taking the writing mode into account.
-
-If the value is grid-order,
-
-- The reading order should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order).
+- For `flex-visual`: the reading order should be defined by the flex items, sorted in the visual reading order and taking the writing mode into account.
+- For `flex-flow`: the reading order should be defined by the flex items, sorted by the CSS ‘flex-flow’ direction.
+- For `grid-rows`: the reading order should be defined by the grid items, sorted first by their displayed row order, and then by their column order, taking the writing mode into account.
+- For `grid-columns`: the reading order should be defined by the grid items, sorted first by their displayed column order, and then by their row order, taking the writing mode into account.
+- For `grid-order`: the reading order should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order).
 
 ## Examples
 
@@ -189,13 +175,13 @@ Current is D
 </style>
 <div class="wrapper">
  <div id="A" style="order: 2">A
-   <button id="a" style="order: 3">Button A</button>
+   <button id="a" style="order: 3">a</button>
  </div>
  <div id="B" style="order: 3">B
-   <button id="b">Button B</button>
+   <button id="b">b</button>
  </div>
  <div id="C" style="order: 1">C
-   <button id="c">Button C</button>
+   <button id="c">c</button>
  </div>
 </div>
 ```
@@ -343,7 +329,7 @@ In this case, we have a DIV that is:
 - Its layout parent is a reading order container
 - Has display: contents
 
-Should the DIV qualify as a reading order item? If so, it can be included in the defined **reading-ordered focus navigation scope, **but there isn’t a straightforward way to include it in the reading order, since it isn’t part of the reading order container, and isn’t displayed on its own. So it’s unclear where it belongs with respect to the other reading order items.
+Should the DIV qualify as a reading order item? If so, it can be included in the defined **reading-ordered focus navigation scope**, but there isn’t a straightforward way to include it in the reading order, since it isn’t part of the reading order container, and isn’t displayed on its own. So it’s unclear where it belongs with respect to the other reading order items. Perhaps the best option is to say that `display:contents` items inside **reading order container**s are not focusable.
 
 ## List of relevant issues
 
