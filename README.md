@@ -1,6 +1,6 @@
 # CSS reading-order-items Explainer
 
-Author: Di Zhang
+Authors: Di Zhang, Mason Freed
 
 Last updated: June 5, 2024
 
