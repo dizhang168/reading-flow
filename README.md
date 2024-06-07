@@ -49,15 +49,15 @@ If _new candidate_ is null, then let _starting point_ be _candidate_, and return
 
 #### reading order sequential navigation search algorithm
 
-To **find the next item in reading order**, given a reading order item _current_, a direction _direction_ and a reading ordered focus navigation scope _scope_, perform the following steps. They return an Element.
+To **find the next item in reading order**, given a reading order item _current_, a direction _direction_ and a reading-ordered focus navigation scope _scope_, perform the following steps. They return an Element.
 
 1. Let _reading order items_ be the list of reading order items owned by _scope_, sorted in **reading order**.
 2. If _reading order items_ is empty, return null.
 3. If _direction_ is “forward”, then:
-   1. If _current_ is null, let _previous_ be the last reading order item, in DOM tree order.
-   2. Otherwise, let _previous_ be the reading order item that comes before _current_, in DOM tree order.
-   3. If _previous_ is null, return the first item in _reading order items_.
-   4. Otherwise, if _previous_ is the last item in _readinging order items_, return null.
+   1. If _current_ is the reading order item from _reading order items_ that comes first in DOM tree order, return first item in _reading order items_.
+   2. If _current_ is null, let _previous_ be the reading order item from _reading order items_ that comes last in DOM tree order.
+   3. Otherwise, let _previous_ be the reading order item that comes before _current_ in DOM tree order.
+   4. If _previous_ is the last item in _reading order items_, return null.
    5. Otherwise, return the item that comes after _previous_ in _reading order items_.
 4. Otherwise:
    1. Let _previous_ be the item that comes before _current_ in _reading order items_.
@@ -117,11 +117,10 @@ In the following examples, we use the new **reading order sequential navigation 
 
 **Forward navigation**
 
-Find first focusable element in scope:
+Start at the first element in the reading-ordered focus navigation scope:
 
-1. Find first element in scope.
-2. Find first element in reading order items.
-3. Return D
+1. Find first element in reading order items, D.
+2. Return D
 
 Given _starting point_ D, _candidate_ null and _direction_ forward:
 
@@ -141,16 +140,15 @@ Given _starting point_ B, _candidate_ C and _direction_ forward:
 
 **Backward navigation**
 
-Find last focusable element in scope:
+End at the last element in the reading-ordered focus navigation scope:
 
-1. Find last element in scope.
-2. Find last element in Reading order, it has no descendant.
-3. Return B
+1. Find last element in reading order items, B.
+2. Return B
 
 Given _starting point_ B and _direction_ backward:
 
 1. _current_ is B.
-2. _previous_ is C, it has no descendant.
+2. _previous_ is C, it has no descendants.
 3. Return C.
 
 ...
@@ -188,11 +186,10 @@ Given _starting point_ D and _direction_ backward:
 
 **Forward navigation**
 
-Find first focusable element in scope:
+Start at the first element in the reading-ordered focus navigation scope:
 
-1. Find first element in scope.
-2. Find first element in reading order items.
-3. Return C.
+1. Find first element in reading order items, C.
+2. Return C.
 
 Given _starting point_ C, _candidate_ c and _direction_ forward:
 
@@ -217,12 +214,11 @@ Given _starting point_ b, _candidate_ C and _direction_ forward:
 
 **Backward navigation**
 
-Find last focusable element in scope:
+End at the last element in the reading-ordered focus navigation scope:
 
-1. Find last element in scope.
-2. Find last element in Reading order, B.
-3. Find last descendant within it, b
-4. Return b.
+1. Find last element in Reading order, B.
+2. Find last descendant within it, b
+3. Return b.
 
 Given _starting point_ b and _direction_ backward:
 
