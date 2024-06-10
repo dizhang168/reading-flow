@@ -2,7 +2,7 @@
 
 Authors: Di Zhang, Mason Freed
 
-Last updated: June 5, 2024
+Last updated: June 6, 2024
 
 Issue: TBD
 
@@ -41,7 +41,7 @@ _2.5. If element’s layout parent is a reading order container, then return the
 
 Add new steps after existing step 1 and before the existing step 2:
 
-1.5. If _candidate_ is a **reading order item** or null, _direction_ is "forward", and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _candidate_, _direction_ and _scope_.
+1.5. If _candidate_ is a **reading order item** or null, _direction_ is "forward", and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _candidate_, _direction_ and _starting point_’s focus navigation _scope_.
 
 If _starting point_ is a **reading order item**, _direction_ is "backward", and _starting point_ is in a **reading-ordered focus navigation scope** _scope_, then let the _new candidate_ be the result of the **reading order sequential navigation search algorithm** with _starting point_, _direction_ and _starting point_’s focus navigation _scope_.
 
@@ -49,15 +49,16 @@ If _new candidate_ is null, then let _starting point_ be _candidate_, and return
 
 #### reading order sequential navigation search algorithm
 
-To **find the next item in reading order**, given a reading order item _current_, a direction _direction_ and a reading ordered focus navigation scope _scope_, perform the following steps. They return an Element.
+To **find the next item in reading order**, given a reading order item _current_, a direction _direction_ and a reading-ordered focus navigation scope _scope_, perform the following steps. They return an Element.
 
 1. Let _reading order items_ be the list of reading order items owned by _scope_, sorted in **reading order**.
 2. If _reading order items_ is empty, return null.
 3. If _direction_ is “forward”, then:
-   1. Let _previous_ be the reading order item that comes before _current_, in DOM tree order.
-   2. If _previous_ is null, return the first item in _reading order items_.
-   3. Otherwise, if _previous_ is the last item in _readinging order items_, return null.
-   4. Otherwise, return the item that comes after _previous_ in \_reading order items.
+   1. If _current_ is the reading order item from _reading order items_ that comes first in DOM tree order, return first item in _reading order items_.
+   2. If _current_ is null, let _previous_ be the reading order item from _reading order items_ that comes last in DOM tree order.
+   3. Otherwise, let _previous_ be the reading order item that comes before _current_ in DOM tree order.
+   4. If _previous_ is the last item in _reading order items_, return null.
+   5. Otherwise, return the item that comes after _previous_ in _reading order items_.
 4. Otherwise:
    1. Let _previous_ be the item that comes before _current_ in _reading order items_.
    2. If _previous_ is null, return null.
@@ -76,7 +77,9 @@ to
 
 The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and, for reading-ordered focus navigation scopes, by the special rules provided by the **sequential navigation search algorithm**. Note: tabindex takes precedence over **reading order**.
 
-### Add new section 6.6.N The Reading Order
+### Add new section 6.6.4 The Reading Order
+
+Add this new section after existing section [6.6.3 The tabindex attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-tabindex-attribute):
 
 A **reading-ordered focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading order container.
 
@@ -89,6 +92,8 @@ The **reading order** for a **reading-ordered focus navigation scope** is determ
 - For `grid-order`: the reading order should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order).
 
 ## Examples
+
+In the following examples, we use the new **reading order sequential navigation search algorithm** to find the next reading order item to navigate to.
 
 ### Example - `grid-order`
 
@@ -110,58 +115,49 @@ The **reading order** for a **reading-ordered focus navigation scope** is determ
 
 <img src="images/example-1-graph.png" width="400" />
 
-Follows the order-modified document order, unless the order property has been used to change the order of items.
-
 **Forward navigation**
 
-Current is null or outside the scope
+Start at the first element in the reading-ordered focus navigation scope:
 
-1. Find first element in scope.
-2. Find first element in Reading order.
-3. Return D
+1. Find first element in reading order items, D.
+2. Return D
 
-Current is D
+Given _starting point_ D, _candidate_ null and _direction_ forward:
 
-1. Find next DOM from D: null since outside the scope.
-2. Find previous. Since next DOM is null, this is last element D.
+1. _current_ is null.
+2. _previous_ is last item in DOM tree order, D.
 3. Move forward from D in reading order.
 4. Return A.
 
-Current is A → Return C
+...
 
-Current is C → Return B
+Given _starting point_ B, _candidate_ C and _direction_ forward:
 
-Current is B
-
-1. Find next DOM from B, aka C.
-2. Find previous from C, aka B.
+1. _current_ is C.
+2. _previous_ is B.
 3. Move forward from B in reading order.
 4. Return null.
 
 **Backward navigation**
 
-Current is null or outside the scope
+End at the last element in the reading-ordered focus navigation scope:
 
-1. Find last element in scope.
-2. Find last element in Reading order.
-3. Return B
+1. Find last element in reading order items, B.
+2. Return B
 
-Current is B
+Given _starting point_ B and _direction_ backward:
 
-1. B is a reading order item.
-2. previous is C.
-3. Iterate in DOM tree order until next reading item after C, aka D.
-4. Return DOM element before D, aka C.
+1. _current_ is B.
+2. _previous_ is C, it has no descendants.
+3. Return C.
 
-Current is C → Return A
+...
 
-Current is A → Return D
+Given _starting point_ D and _direction_ backward:
 
-Current is D
-
-1. D is a reading order item.
-2. previous is null.
-3. Return null as we are already at last item to visit.
+1. _current_ is D.
+2. _previous_ is null.
+3. Return null.
 
 ### Example - `grid-order` with nested children
 
@@ -190,68 +186,58 @@ Current is D
 
 **Forward navigation**
 
-Current is null or outside the scope
+Start at the first element in the reading-ordered focus navigation scope:
 
-1. Find first element in scope.
-2. Find first element in Reading order.
-3. Return C
+1. Find first element in reading order items, C.
+2. Return C.
 
-Current is C
+Given _starting point_ C, _candidate_ c and _direction_ forward:
 
-1. Find next DOM from C, aka c.
-2. Since c is not a reading order item nor is it null, return c.
+1. Not in reading order sequential navigation since c is not a reading order item.
+2. Return c.
 
-Current is button c
+Given _starting point_ c, _candidate_ null and _direction_ forward:
 
-1. Find next DOM from c, aka null.
-2. Find previous. Since next DOM is null, this is C.
+1. _current_ is null.
+2. _previous_ is last item in DOM tree order, C.
 3. Move forward from C in reading order.
 4. Return A.
 
-Current A → Return a.
+...
 
-Current a → Return B.
+Given _starting point_ b, _candidate_ C and _direction_ forward:
 
-Current B → Return b.
-
-Current is b
-
-1. Find next DOM from b, aka null.
-2. Find previous. Since next DOM is null, this is B.
+1. _current_ is C.
+2. _previous_ is B.
 3. Move forward from B in reading order.
 4. Return null.
 
 **Backward navigation**
 
-Current is null or outside the scope
+End at the last element in the reading-ordered focus navigation scope:
 
-1. Find last element in scope.
-2. Find last element in Reading order, B
-3. Find last child element within it, return b
+1. Find last element in Reading order, B.
+2. Find last descendant within it, b
+3. Return b.
 
-Current is b
+Given _starting point_ b and _direction_ backward:
 
-1. b is not a reading order item
-2. Reading the previous DOM order element, B
+1. Not in reading order sequential navigation since b is not a reading order item.
+2. Return B.
 
-Current is B
+Given _starting point_ B and _direction_ backward:
 
-1. B is a reading order item.
-2. previous is A.
-3. Iterate in DOM tree order until next reading item after A, aka B.
-4. Return DOM element before B, aka a.
+1. _current_ is B.
+2. _previous_ is A, it has descendant a.
+3. Return a.
 
-Current is a → Return A
+...
 
-Current is A → Return c
+Given _starting point_ C and _direction_ backward:
 
-Current is c → Return C
-
-Current is C
-
-1. C is a reading order item.
-2. previous is null.
-3. Return null as we are already at last item to visit.
+1. _current_ is C.
+2. _previous_ is null.
+3. Return null.
 
 ## Open Questions
 
