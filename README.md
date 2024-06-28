@@ -4,7 +4,7 @@ Authors: Di Zhang, Mason Freed
 
 Last updated: June 18, 2024
 
-Issue: TBD
+Issue: https://github.com/whatwg/html/issues/10407
 
 ## Introduction to the problem
 
