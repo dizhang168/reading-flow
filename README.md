@@ -2,7 +2,7 @@
 
 Authors: Di Zhang, Mason Freed
 
-Last updated: June 18, 2024
+Last updated: Aug 13, 2024
 
 Issue: https://github.com/whatwg/html/issues/10407
 
@@ -10,7 +10,7 @@ Issue: https://github.com/whatwg/html/issues/10407
 
 Focus navigation is the mechanism that allows users to navigate and access the contents of a website using their keyboard. Currently, this navigation follows the source order, aka the order the elements are defined in the DOM tree. This causes a disconnect when the elements are displayed in a different order, using a flexbox or grid layout, where the visual reading flow can be different from the underlying source order using features like the `order` property.
 
-The CSS Working Group proposed to solve this problem using the [new CSS property reading-flow](https://drafts.csswg.org/css-display-4/#reading-flow). This property allows developers to specify how items within a flex or grid container should be read. In this explainer, we are proposing changes to the WHATWG specifications to support this new property for sequential focus navigation. Namely, we propose adding a new focus scope owner and more steps to the sequential navigation search algorithm.
+The CSS Working Group resolved to solve this problem using the [new CSS property reading-flow](https://drafts.csswg.org/css-display-4/#reading-flow). This property allows developers to specify how items within a flex or grid container should be read. In this explainer, we are proposing changes to the WHATWG specifications to support this new property for sequential focus navigation. Namely, we propose adding a new focus scope owner and more steps to the sequential navigation search algorithm.
 
 Note this feature will become even more valuable in the upcoming CSS Masonry, which uses an automatic layout method in which items are displayed in a harder-to-predict order.
 
@@ -23,17 +23,24 @@ A **reading flow container** is either
 - a flex container that has the CSS property `reading-flow` set to `flex-visual` or `flex-flow`.
 - a grid container that has the CSS property `reading-flow` set to `grid-rows`, `grid-columns` or `grid-order`.
 
-A **reading flow item** is a flex item or grid item whose layout parent is a reading flow container.
+A **reading flow owner** is either
+
+- a **reading flow container**
+- a `display: content` element whose box tree parent is a **reading flow container**
+
+A **reading flow item** is a flex item or grid item whose parent is a reading flow owner.
 
 ### New Focus Navigation Scope Owner
 
 The definition of [focus navigation scope owner](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) should be modified:
 
-_A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a **reading flow container**._
+A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a reading flow owner.
 
-Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 2 and before the existing step 3:
+Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 1 and before the existing step 2:
 
-_2.5. If element’s layout parent is a reading flow container, then return the reading flow container element._
+1.5. If element’s parent is a reading flow owner, then return _element_.
+
+Note: It is possible for an element to be match multiple conditions (for example, a slot that is a reading flow owner). In such cases, a **reading-flow focus navigation scope** should be created.
 
 ### Changes to `sequential navigation search algorithm`
 
@@ -81,15 +88,17 @@ The order within a [tabindex-ordered focus navigation scope](https://html.spec.w
 
 Add this new section after existing section [6.6.3 The tabindex attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-tabindex-attribute):
 
-A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading flow container.
+A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading flow owner.
 
-The **reading flow** for a **reading-flow focus navigation scope** is determined by the container’s [reading-flow](https://drafts.csswg.org/css-display-4/#propdef-reading-flow) value:
+The **reading flow** for a **reading-flow focus navigation scope** is determined by the box tree’s [reading-flow](https://drafts.csswg.org/css-display-4/#propdef-reading-flow) value:
 
 - For `flex-visual`: the reading flow should be defined by the flex items, sorted in the visual reading flow and taking the writing mode into account.
 - For `flex-flow`: the reading flow should be defined by the flex items, sorted by the CSS ‘flex-flow’ direction.
 - For `grid-rows`: the reading flow should be defined by the grid items, sorted first by their displayed row order, and then by their column order, taking the writing mode into account.
 - For `grid-columns`: the reading flow should be defined by the grid items, sorted first by their displayed column order, and then by their row order, taking the writing mode into account.
 - For `grid-order`: the reading flow should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order).
+
+Elements with computed CSS values `display: contents`, `position: fixed` and `position: absolute` are not **reading-flow** sorted because they either do not produce a box tree or are removed from the normal reading flow. These should be visited after sorted reading flow items, in DOM tree order.
 
 ## Examples
 
@@ -239,15 +248,62 @@ Given _starting point_ C and _direction_ backward:
 2. _previous_ is null.
 3. Return null.
 
-## Open Questions
-
-#### What should be the reading flow if reading flow items are defined through display: contents and cross different scopes?
+### Example - `flex-visual` with focusable `display: contents`
 
 ```HTML
 <!DOCTYPE html>
 <meta charset="utf-8">
 
-<div>
+<style>
+.wrapper {
+  display: flex;
+  reading-flow: flex-visual;
+}
+</style>
+
+<div class="wrapper" id=wrapper>
+ <div id=d1 style="display: contents" tabindex="0">
+   <button style="order: 3" id="C">C</button>
+   <button style="order: 1" id="A">A</button>
+   <div id=d2 style="display: contents" tabindex=0>
+     <button style="order: 4" id="D">D</button>
+     <button style="order: 2" id="B">B</button>
+   </div>
+ </div>
+</div>
+```
+
+Render:
+
+<img src="images/example-3-render.png" width="200" />
+
+Source order: C,A,D,B
+
+In this example, we have 3 focus scopes:
+
+- A scope where the wrapper is the owner and it follows reading flow order.
+- A scope where d1 is the owner and it follows reading flow order.
+- A scope where d2 is the owner and it follows reading flow order.
+
+The focus order will be:
+
+- wrapper, create scope
+  - d1, create scope
+    - A
+    - C
+    - d2, create scope
+      - B
+      - D
+
+reading flow: d1,A,C,d2,B,D
+
+### Example - `flex-visual` with `Shadow DOM`
+
+```HTML
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<div id="host">
 <template shadowrootmode="open" shadowrootdelegatesfocus>
 <style>
 .wrapper {
@@ -255,29 +311,43 @@ Given _starting point_ C and _direction_ backward:
   reading-flow: flex-visual;
 }
 </style>
-<div class=wrapper>
-<button id="A" style="order: 2">Item A</button>
-<slot></slot>
-<button id="C" style="order: 4">Item C</button>
+<div class=wrapper id="wrapper">
+<button id="A" style="order: 4">Item A</button>
+<slot id="slot"></slot>
+<button id="C" style="order: 2">Item C</button>
 </div>
 </template>
 
-<button id="B1" style="order: 1">Slotted B1</button>
-<button id="B2" style="order: 3">Slotted B2</button>
+<button id="B1" style="order: 3">Slotted B1</button>
+<button id="B2" style="order: 1">Slotted B2</button>
 </div>
 ```
 
 Render:
 
-<img src="images/open-question-1-render.png" width="300" />
+<img src="images/example-4-render.png" width="300" />
 
 Source order: A,B1,B2,C
 
-reading flow: B1,A,B2,C
+In this example, we have 3 focus scopes:
 
-Given the [flattened tabindex-ordered focus navigation ](https://html.spec.whatwg.org/multipage/interaction.html#flattened-tabindex-ordered-focus-navigation-scope)scope, step 2.2, we should visit all elements within a scope together (so B1, then B2). However, that is visually the wrong order.
+- A scope where the shadow host is the owner and it follows DOM order.
+- A scope where the wrapper is the owner and it follows reading flow order.
+- A scope where the slot is the owner and it follows reading flow order.
 
-#### What should be the reading flow if a reading flow item is a display: contents scope owner?
+The focus order will be:
+
+- host, create scope
+  - wrapper, create scope
+    - C
+    - A
+    - slot, create scope
+      - B2
+      - B1
+
+reading flow: C,A,B2,B1
+
+### Example - Another `flex-visual` with `Shadow DOM`
 
 ```HTML
 <!DOCTYPE html>
@@ -289,10 +359,10 @@ Given the [flattened tabindex-ordered focus navigation ](https://html.spec.whatw
    reading-flow: flex-visual;
  }
  </style>
-<div class=wrapper id="root">
- <div style="display: contents">
+<div class=wrapper id="wrapper">
+ <div style="display: contents" id=host>
    <template shadowrootmode=open>
-     <slot></slot>
+     <slot id=slot></slot>
    </template>
    <button id="A2" style="order: 2">A</button>
    <button id="B2" style="order: 1">B</button>
@@ -303,29 +373,46 @@ Given the [flattened tabindex-ordered focus navigation ](https://html.spec.whatw
 
 Render:
 
-<img src="images/open-question-2-render.png" width="100" />
+<img src="images/example-5-render.png" width="100" />
 
 Source order: A,B,C
 
-reading flow: B,A,C
+In this example, we have 3 focus scopes:
 
-In this case, we have a DIV that is:
+- A scope where wrapper is the owner and it follows reading flow order.
+- A scope where host is the owner and it follows reading flow order.
+- A scope where the slot is the owner and it follows reading flow order.
 
-- A Shadow host (so a focus navigation scope owner)
-- Its layout parent is a reading flow container
-- Has display: contents
+The focus order will be:
 
-Should the DIV qualify as a reading flow item? If so, it can be included in the defined **reading-flow focus navigation scope**, but there isn’t a straightforward way to include it in the reading flow, since it isn’t part of the reading flow container, and isn’t displayed on its own. So it’s unclear where it belongs with respect to the other reading flow items. Perhaps the best option is to say that `display:contents` items inside **reading flow container**s are not focusable.
+- wrapper, create scope
+  - C
+  - host, create scope
+    - slot, create scope
+      - B
+      - A
+
+reading flow: C,B,A
 
 ## List of relevant issues
 
 [csswg-drafts issue 9230](https://github.com/w3c/csswg-drafts/issues/9230) Define how reading-flow interact with focusable display: contents elements.
 
+[whatwg issue 10533](https://github.com/whatwg/html/issues/10533) Discussing how to focus navigate display: contents elements that are focusable in CSS reading-flow
+
+[whatwg issue 10539](https://github.com/whatwg/html/issues/10539) Discussing how to focus navigate display: contents elements that are focusable in CSS reading-flow
+
+[Chrome Feedback request Blog Post](https://developer.chrome.com/blog/reading-flow-display-contents?hl=en)
+
+[csswg-drafts issue 9922](https://github.com/w3c/csswg-drafts/issues/9922) Should the reading-order-items property apply to tables in addition to flex and grid layouts?
+
+[aria issue 2241](https://github.com/w3c/aria/issues/2241) Accessiblity review of CSS proposal
+
+### Old/Resolved issues
+
 [csswg-drafts issue 7387](https://github.com/w3c/csswg-drafts/issues/7387) Providing authors with a method of opting into following the visual order, rather than logical order
 
 [csswg-drafts issue 9921](https://github.com/w3c/csswg-drafts/issues/9921) Is reading-order-items the best name for this property?
-
-[csswg-drafts issue 9922](https://github.com/w3c/csswg-drafts/issues/9922) Should the reading-order-items property apply to tables in addition to flex and grid layouts?
 
 [csswg-drafts issue 9923](https://github.com/w3c/csswg-drafts/issues/9923) Proposed alternative syntax for reading order
 
