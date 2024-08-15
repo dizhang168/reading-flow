@@ -23,24 +23,26 @@ A **reading flow container** is either
 - a flex container that has the CSS property `reading-flow` set to `flex-visual` or `flex-flow`.
 - a grid container that has the CSS property `reading-flow` set to `grid-rows`, `grid-columns` or `grid-order`.
 
-A **reading flow owner** is either
+A **reading flow scope owner** is either
 
 - a **reading flow container**
-- a `display: content` element whose box tree parent is a **reading flow container**
+- a `display: contents` element whose box tree parent is a **reading flow container**
 
-A **reading flow item** is a flex item or grid item whose parent is a reading flow owner.
+A **reading flow item** is an element whose parent is a **reading flow scope owner**.
+
+A **non participating reading flow item** is an element whose parent is a **reading flow scope owner** and whose computed value of the 'display' property is 'contents' or whose computed value of the 'position' property is 'fixed' or 'absolute'.
 
 ### New Focus Navigation Scope Owner
 
 The definition of [focus navigation scope owner](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) should be modified:
 
-A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a reading flow owner.
+A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a reading flow scope owner.
 
 Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 1 and before the existing step 2:
 
-1.5. If element’s parent is a reading flow owner, then return _element_.
+1.5. If element’s parent is a reading flow scope owner, then return _element_.
 
-Note: It is possible for an element to be match multiple conditions (for example, a slot that is a reading flow owner). In such cases, a **reading-flow focus navigation scope** should be created.
+Note: It is possible for an element to match multiple conditions (for example, a slot that is a reading flow scope owner). In such cases, a **reading-flow focus navigation scope** should be created.
 
 ### Changes to `sequential navigation search algorithm`
 
@@ -88,17 +90,15 @@ The order within a [tabindex-ordered focus navigation scope](https://html.spec.w
 
 Add this new section after existing section [6.6.3 The tabindex attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-tabindex-attribute):
 
-A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading flow owner.
+A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading flow scope owner.
 
-The **reading flow** for a **reading-flow focus navigation scope** is determined by the box tree’s [reading-flow](https://drafts.csswg.org/css-display-4/#propdef-reading-flow) value:
+The **reading flow** for a **reading-flow focus navigation scope** is determined by the scope owner's [CSS reading-flow](https://drafts.csswg.org/css-display-4/#propdef-reading-flow) value:
 
-- For `flex-visual`: the reading flow should be defined by the flex items, sorted in the visual reading flow and taking the writing mode into account.
-- For `flex-flow`: the reading flow should be defined by the flex items, sorted by the CSS ‘flex-flow’ direction.
-- For `grid-rows`: the reading flow should be defined by the grid items, sorted first by their displayed row order, and then by their column order, taking the writing mode into account.
-- For `grid-columns`: the reading flow should be defined by the grid items, sorted first by their displayed column order, and then by their row order, taking the writing mode into account.
-- For `grid-order`: the reading flow should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order).
-
-Elements with computed CSS values `display: contents`, `position: fixed` and `position: absolute` are not **reading-flow** sorted because they either do not produce a box tree or are removed from the normal reading flow. These should be visited after sorted reading flow items, in DOM tree order.
+- For `flex-visual`: the reading flow should be defined by the flex items, sorted in the visual reading flow and taking the writing mode into account, followed by **non participating reading flow items**.
+- For `flex-flow`: the reading flow should be defined by the flex items, sorted by the CSS ‘flex-flow’ direction, followed by **non participating reading flow items**.
+- For `grid-rows`: the reading flow should be defined by the grid items, sorted first by their displayed row order, and then by their column order, taking the writing mode into account, followed by **non participating reading flow items**.
+- For `grid-columns`: the reading flow should be defined by the grid items, sorted first by their displayed column order, and then by their row order, taking the writing mode into account, followed by **non participating reading flow items**.
+- For `grid-order`: the reading flow should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order), followed by **non participating reading flow items**.
 
 ## Examples
 
