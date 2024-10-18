@@ -2,7 +2,7 @@
 
 Authors: Di Zhang, Mason Freed
 
-Last updated: Aug 13, 2024
+Last updated: October 18, 2024
 
 Issue: https://github.com/whatwg/html/issues/10407
 
@@ -36,13 +36,15 @@ A **non participating reading flow item** is an element whose parent is a **read
 
 The definition of [focus navigation scope owner](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) should be modified:
 
-A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a reading flow scope owner.
+_A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a **reading flow container**._
 
-Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 1 and before the existing step 2:
+Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 2 and before the existing step 3:
 
-1.5. If element’s parent is a reading flow scope owner, then return _element_.
+_2.5. If element’s layout parent is a reading flow container, then return the reading flow container element._
 
 Note: It is possible for an element to match multiple conditions (for example, a slot that is a reading flow scope owner). In such cases, a **reading-flow focus navigation scope** should be created.
+
+> > > > > > > Stashed changes
 
 ### Changes to `sequential navigation search algorithm`
 
@@ -393,6 +395,12 @@ The focus order will be:
       - A
 
 reading flow: C,B,A
+
+## Open questions
+
+[reading-flow vs display: contents](./display-contents-focus-scope-owner.md)
+
+[reading-flow vs tabindex](./reading-flow-vs-tabindex.md)
 
 ## List of relevant issues
 
