@@ -26,7 +26,7 @@ A **reading flow container** is either
 A **reading flow scope owner** is either
 
 - a **reading flow container**
-- a `display: contents` element whose box tree parent is a **reading flow container**
+- a `display: contents` element whose box tree parent is a **reading flow container**.
 
 A **reading flow item** is an element whose parent is a **reading flow scope owner**.
 
@@ -36,15 +36,11 @@ A **non participating reading flow item** is an element whose parent is a **read
 
 The definition of [focus navigation scope owner](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) should be modified:
 
-_A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a **reading flow container**._
+_A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a **reading flow scope owner**._
 
-Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 2 and before the existing step 3:
+Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 5 and before the existing step 6:
 
-_2.5. If element’s layout parent is a reading flow container, then return the reading flow container element._
-
-Note: It is possible for an element to match multiple conditions (for example, a slot that is a reading flow scope owner). In such cases, a **reading-flow focus navigation scope** should be created.
-
-> > > > > > > Stashed changes
+_6. If element’s parent is a reading flow scope owner, then return the parent._
 
 ### Changes to `sequential navigation search algorithm`
 
