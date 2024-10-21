@@ -174,18 +174,6 @@ Proposal 2. Do not make reading flow items focus scope owner, positive tabindex 
 - Con: Developers are not able to set positive tabindex, but it might still be useful, to be more aligned with existing behavior and if their goal is to not follow the visual-order.
 - Con: reading-flow should only affect the items, not its descendants.
 
-## Open questions
-
-### `reading-flow: normal`
-
-For the value `reading-flow: normal`, should it behaves as:
-
-Proposal 1. Not a reading flow container (current implementation).
-
-Proposal 2. Still uses the dom order, but force each reading-flow item to be a scope owner and does not have a positive tabindex.
-
-I think option 1 still makes the most sense since we would like to have a default behavior that is the same as the current no reading-flow behavior. But maybe it would be a good idea to add another value to enable the tabindex behavior in this explainer.
-
 ## Example with the proposed change
 
 ### Example 1
