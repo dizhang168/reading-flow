@@ -1,4 +1,4 @@
-# Define how reading-flow interacts with focusable display: contents elements
+# tabindex vs reading-flow property
 
 HTML Issue: https://github.com/whatwg/html/issues/10642
 
@@ -6,11 +6,11 @@ HTML Issue: https://github.com/whatwg/html/issues/10642
 
 Not resolved, but has a proposal getting prototyped.
 
-During the CSS/WHATWG joint session at TPAC, we concluded that it would be better to make tabindex more subordinate to 'reading-flow'.
+During the CSS/WHATWG joint session at TPAC, we concluded that it would be better to make tabindex more of a subordinate to 'reading-flow'.
 
 ## What is the issue with the HTML Standard?
 
-Currently, the reading-flow property has the behavior that 'reading-flow' makes the element a scope owner. tabindex is an HTML property that can re-order the elements in a focus scope. Within that scope, tabindex has priority. This means tabindex ordering is consulted first, with visual-order giving tiebreaking between identical values.
+Currently, the reading-flow property has the behavior that 'reading-flow' can make an element a focus scope owner. tabindex is an HTML property that can re-order the elements in a focus scope. Within that scope, tabindex has priority. This means tabindex ordering is consulted first, with visual-order giving tiebreaking between identical values.
 
 ## Why positive tabindex is bad
 
@@ -73,7 +73,7 @@ body {
 </div>
 ```
 
-This will be fixed with reading-flow, such as tabindex wouldn't be necessary:
+This will be fixed with reading-flow, such as positive tabindex wouldn't be necessary:
 
 ```HTML
 <div class="wrapper" style="reading-flow: grid-columns">
@@ -107,7 +107,7 @@ Example of people asking about focus navigation on Stackoverflow, specifically f
 
 ## Proposal
 
-(from github issue)
+(from [github issue](https://github.com/whatwg/html/issues/10642))
 
 1. On the "reading flow items", tabindex is ignored for ordering purposes.
    1. If tabindex is higher than 0, set it to 0.
@@ -120,11 +120,18 @@ Ignoring tabindex's ordering effects on the reading order items themselves seems
 
 ## Spec changes
 
-Add to **reading flow scope owner** definition:
+Change: A **reading flow container scope owner** is either
 
+- a **reading flow container**
+- a `display: contents` element whose box tree parent is a **reading flow container**.
+
+Change: A **reading flow scope owner** is either:
+
+- a reading flow container scope owner
 - a reading flow item
 
 Change the definition of **reading flow item**:
+
 A **reading flow item** is an element whose box tree parent is a reading flow container.
 
 ### Changes to `tabindex-ordered focus navigation scope`
@@ -137,14 +144,7 @@ The order within a [tabindex-ordered focus navigation scope](https://html.spec.w
 
 to
 
-The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and the order within a [reading-flow focus navigation scope](TBD), by the special rules provided by the **reading flow sequential navigation search algorithm**.
-
-### Changes to section 6.6.3 The tabindex attribute
-
-Under **If the value is greater than zero**, add at the end:
-
-If element is a reading flow item, set its tabindex default value to 0.
-
+The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and, the order within a [reading-flow focus navigation scope](TBD) is determined by the rules provided by the **sequential navigation search algorithm**.
 
 ### Changes to new section 6.6.4 The reading flow
 
@@ -154,13 +154,15 @@ A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigatio
 
 to
 
-A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading flow container or a reading flow display: contents container.
+A **reading-flow focus navigation scope** is a [focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#focus-navigation-scope) where the scope owner is a **reading flow container** or a `display: contents` element whose box tree parent is a **reading flow container**.
 
+### Changes to reading flow sequential navigation search algorithm
 
+Add after existing step 1:
 
-_ETC... TO BE EXPANDED directly in the HTML spec PR._
+2. For each _reading flow item_ in _reading flow items_, if its tabindex value is greater than zero, set its value to 0.
 
-## Alternate proposals
+## Alternate proposals and why they might not work
 
 Here are some other options, which we have eliminated (for now).
 
@@ -176,7 +178,7 @@ Proposal 2. Do not make reading flow items focus scope owner, positive tabindex 
 
 ## Example with the proposed change
 
-### Example 1
+## Example 1
 
 ```HTML
 <style>
