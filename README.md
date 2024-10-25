@@ -2,7 +2,7 @@
 
 Authors: Di Zhang, Mason Freed
 
-Last updated: October 18, 2024
+Last updated: October 25, 2024
 
 Issue: https://github.com/whatwg/html/issues/10407
 
@@ -18,79 +18,81 @@ Note this feature will become even more valuable in the upcoming CSS Masonry, wh
 
 ### Definitions
 
-A **reading flow container** is either
+A **reading flow container** is either:
 
 - a flex container that has the CSS property `reading-flow` set to `flex-visual` or `flex-flow`.
 - a grid container that has the CSS property `reading-flow` set to `grid-rows`, `grid-columns` or `grid-order`.
 
-A **reading flow scope owner** is either
+A **reading flow container scope owner** is either:
 
-- a **reading flow container**
+- a **reading flow container**.
 - a `display: contents` element whose box tree parent is a **reading flow container**.
 
-A **reading flow item** is an element whose parent is a **reading flow scope owner**.
+A **reading flow item** is an element whose parent is a **reading flow container scope owner**.
 
-A **non participating reading flow item** is an element whose parent is a **reading flow scope owner** and whose computed value of the 'display' property is 'contents' or whose computed value of the 'position' property is 'fixed' or 'absolute'.
+A **non participating reading flow item** is a **reading flow item** whose computed value of the 'display' property is 'contents' or whose computed value of the 'position' property is 'fixed' or 'absolute'.
 
 ### New Focus Navigation Scope Owner
 
 The definition of [focus navigation scope owner](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) should be modified:
 
-_A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, or a **reading flow scope owner**._
+_A node is a focus navigation scope owner if it is a Document, a shadow host, a slot, an element in the popover showing state which also has a popover invoker set, a **reading flow container scope owner** or a **reading flow item**._
 
 Add this to the [associated focus navigation owner](https://html.spec.whatwg.org/multipage/interaction.html#associated-focus-navigation-owner) algorithm, after existing step 5 and before the existing step 6:
 
-_6. If element’s parent is a reading flow scope owner, then return the parent._
+_6. If element’s parent is a reading flow container scope owner or a reading flow item, then return the parent._
 
 ### Changes to `sequential navigation search algorithm`
 
 [https://html.spec.whatwg.org/multipage/interaction.html#sequential-navigation-search-algorithm](https://html.spec.whatwg.org/multipage/interaction.html#sequential-navigation-search-algorithm)
 
-Add new steps after existing step 1 and before the existing step 2:
+Add new steps inside existing step 2, after point 2.1:
 
-1.5. If _candidate_ is a **reading flow item** or null, _direction_ is "forward", and _starting point_ is in a **reading-flow focus navigation scope** _scope_, then let _new candidate_ be the result of the **reading flow sequential navigation search algorithm** with _candidate_, _direction_ and _starting point_’s focus navigation _scope_.
+2.1.5. If _starting point_ is in a **reading-flow container focus navigation scope** _scope_, then let _candidate_ be the result of the **reading-flow container sequential navigation search algorithm** with _starting point_, _direction_ and _scope_.
 
-If _starting point_ is a **reading flow item**, _direction_ is "backward", and _starting point_ is in a **reading-flow focus navigation scope** _scope_, then let the _new candidate_ be the result of the **reading flow sequential navigation search algorithm** with _starting point_, _direction_ and _starting point_’s focus navigation _scope_.
+#### reading-flow container sequential navigation search algorithm
 
-If _new candidate_ is null, then let _starting point_ be _candidate_, and return to step 1 of this algorithm. Otherwise, let _candidate_ be _new candidate_.
-
-#### reading flow sequential navigation search algorithm
-
-To **find the next item in reading flow**, given a reading flow item _current_, a direction _direction_ and a reading-flow focus navigation scope _scope_, perform the following steps. They return an Element.
+To **find the next item in reading flow**, given a reading flow item _current_, a direction _direction_ and a reading-flow container focus navigation scope _scope_, perform the following steps. They return an Element.
 
 1. Let _reading flow items_ be the list of reading flow items owned by _scope_, sorted in **reading flow**.
-2. If _reading flow items_ is empty, return null.
-3. If _direction_ is “forward”, then:
-   1. If _current_ is the reading flow item from _reading flow items_ that comes first in DOM tree order, return first item in _reading flow items_.
-   2. If _current_ is null, let _previous_ be the reading flow item from _reading flow items_ that comes last in DOM tree order.
-   3. Otherwise, let _previous_ be the reading flow item that comes before _current_ in DOM tree order.
-   4. If _previous_ is the last item in _reading flow items_, return null.
-   5. Otherwise, return the item that comes after _previous_ in _reading flow items_.
-4. Otherwise:
-   1. Let _previous_ be the item that comes before _current_ in _reading flow items_.
-   2. If _previous_ is null, return null.
-   3. Otherwise, if _previous_ does not have any DOM tree descendants, return _previous_.
-   4. Otherwise, return the last DOM tree descendant of _previous_.
+2. If _direction_ is “forward”, then return the item that comes after _current_ in _reading flow items_.
+3. Otherwise, return the item that comes before _current_ in _reading flow items_.
 
 ### Changes to `tabindex-ordered focus navigation scope`
 
 [https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope)
 
-Change
+Change definition:
 
-The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value), as described in the section below.
+A **tabindex-ordered focus navigation scope** is a list of focusable areas and focus navigation scope owners, whose contents are determined as follow:
 
-to
+- It contains all elements in owner's focus navigation scope that are themselves focus navigation scope owners, except the elements whose tabindex value is a negative integer.
 
-The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and, for reading-flow focus navigation scopes, by the special rules provided by the **sequential navigation search algorithm**. Note: tabindex takes precedence over **reading flow**.
+- It contains all of the focusable areas whose DOM anchor is an element in owner's focus navigation scope, except the focusable areas whose tabindex value is a negative integer.
+
+Every focus navigation scope owner owner has either a **tabindex-ordered focus navigation scope** or a **reading-flow container focus navigation scope**.
+
+The order within a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) is determined by each element's [tabindex value](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-value) and, the order within a [reading-flow container focus navigation scope](TBD) is determined by the scope owner's [reading flow value](TBD).
+
+Change definition **flattened tabindex-ordered focus navigation scope** to **flattened focus navigation scope**:
+
+A flattened focus navigation scope is a list of focusable areas. Every focus navigation scope owner _owner_ owns a distinct flattened focus navigation scope, whose contents are determined by the following algorithm:
+
+1. Let result be a clone of owner's tabindex-ordered focus navigation scope or reading-flow container focus navigation scope.
+2. For each item of result:
+   1. If item is not a focus navigation scope owner, then continue.
+   2. If item is not a focusable area, then replace item with all of the items in item's flattened focus navigation scope.
+   3. Otherwise, insert the contents of item's flattened focus navigation scope after item.
+
+TODO(dizhangg): Change reference to all these scopes as well in the spec.
 
 ### Add new section 6.6.4 The reading flow
 
 Add this new section after existing section [6.6.3 The tabindex attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-tabindex-attribute):
 
-A **reading-flow focus navigation scope** is a [tabindex-ordered focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#tabindex-ordered-focus-navigation-scope) where the scope owner is a reading flow scope owner.
+A **reading-flow container focus navigation scope** is a [focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#focus-navigation-scope) where the scope owner is a **reading flow container scope owner**.
 
-The **reading flow** for a **reading-flow focus navigation scope** is determined by the scope owner's [CSS reading-flow](https://drafts.csswg.org/css-display-4/#propdef-reading-flow) value:
+The **reading flow** for a **reading-flow container focus navigation scope** is determined by the scope owner's [CSS reading-flow](https://drafts.csswg.org/css-display-4/#propdef-reading-flow) value:
 
 - For `flex-visual`: the reading flow should be defined by the flex items, sorted in the visual reading flow and taking the writing mode into account, followed by **non participating reading flow items**.
 - For `flex-flow`: the reading flow should be defined by the flex items, sorted by the CSS ‘flex-flow’ direction, followed by **non participating reading flow items**.
@@ -99,6 +101,8 @@ The **reading flow** for a **reading-flow focus navigation scope** is determined
 - For `grid-order`: the reading flow should follow the [order-modified document order](https://drafts.csswg.org/css-display-4/#order-modified-document-order), followed by **non participating reading flow items**.
 
 ## Examples
+
+NOTE: These examples might be outdated.
 
 In the following examples, we use the new **reading flow sequential navigation search algorithm** to find the next reading flow item to navigate to.
 
@@ -124,7 +128,7 @@ In the following examples, we use the new **reading flow sequential navigation s
 
 **Forward navigation**
 
-Start at the first element in the reading-flow focus navigation scope:
+Start at the first element in the reading-flow container focus navigation scope:
 
 1. Find first element in reading flow items, D.
 2. Return D
@@ -147,7 +151,7 @@ Given _starting point_ B, _candidate_ C and _direction_ forward:
 
 **Backward navigation**
 
-End at the last element in the reading-flow focus navigation scope:
+End at the last element in the reading-flow container focus navigation scope:
 
 1. Find last element in reading flow items, B.
 2. Return B
@@ -193,7 +197,7 @@ Given _starting point_ D and _direction_ backward:
 
 **Forward navigation**
 
-Start at the first element in the reading-flow focus navigation scope:
+Start at the first element in the reading-flow container focus navigation scope:
 
 1. Find first element in reading flow items, C.
 2. Return C.
@@ -221,7 +225,7 @@ Given _starting point_ b, _candidate_ C and _direction_ forward:
 
 **Backward navigation**
 
-End at the last element in the reading-flow focus navigation scope:
+End at the last element in the reading-flow container focus navigation scope:
 
 1. Find last element in reading flow, B.
 2. Find last descendant within it, b

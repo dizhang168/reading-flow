@@ -4,9 +4,8 @@ HTML Issue: https://github.com/whatwg/html/issues/10642
 
 ## Current status
 
-Not resolved, but has a proposal getting prototyped.
-
 During the CSS/WHATWG joint session at TPAC, we concluded that it would be better to make tabindex more of a subordinate to 'reading-flow'.
+In the WHATNOT meeting, we agreeed to proceed with this proposal in the spec language.
 
 ## What is the issue with the HTML Standard?
 
@@ -156,12 +155,6 @@ to
 
 A **reading-flow focus navigation scope** is a [focus navigation scope](https://html.spec.whatwg.org/multipage/interaction.html#focus-navigation-scope) where the scope owner is a **reading flow container** or a `display: contents` element whose box tree parent is a **reading flow container**.
 
-### Changes to reading flow sequential navigation search algorithm
-
-Add after existing step 1:
-
-2. For each _reading flow item_ in _reading flow items_, if its tabindex value is greater than zero, set its value to 0.
-
 ## Alternate proposals and why they might not work
 
 Here are some other options, which we have eliminated (for now).
@@ -238,3 +231,37 @@ By changing so tabindex doesn't affect reading flow item, but will making readin
 
 In this case, having the scope on the reading-flow item does look and feel more natural.
 If the reading-flow item was not a scope owner, then tabindex takes priority and it would be easy to have cases where descendants would be visited first.
+
+## Example 2
+
+![image](https://github.com/user-attachments/assets/75cfe266-7a6e-4df2-a68a-b8a610d5b65d)
+
+```HTML
+<style>
+.wrapper {
+ display: grid;
+ reading-flow: grid-order;
+}
+
+</style>
+
+<div class="wrapper">
+ <div id="A" tabindex="0" style="order: 1">A
+   <div id="B" tabindex="0">B</div>
+ </div>
+ <div id="contents" tabindex="0" style="display: contents">
+   <div id="C" tabindex="0" style="order: 3">C
+     <div id="D" tabindex="0">D</div>
+     <div id="E" tabindex="1">E</div>
+   </div>
+   <div id="F" tabindex="0" style="order: 2">F</div>
+ </div>
+ <div id="absolute" style="position: absolute; left: 100px;" tabindex="0">
+   <div id="H">H</div>
+ </div>
+ <div id="G" tabindex="0" style="order: 4">G</div>
+</div>
+```
+
+Forward focus order is:
+Wrapper -> A -> B -> Display: contents -> F -> C -> E -> D -> G -> position: absolute -> H
