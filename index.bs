@@ -1,0 +1,28 @@
+<pre class='metadata'>
+Title: The CSS reading-flow property
+Shortname: css-reading-flow
+Level: CSS Display Module Level 4
+Status: w3c/csswg-drafts
+Repository: explainers-by-googlers/css-reading-flow
+URL: https://explainers-by-googlers.github.io/css-reading-flow
+Editor: Di Zhang, Google https://google.com, dizhangg@google.com
+Abstract: Explainer for CSS reading-flow property behavior to support focus navigation and accessibility tree to use visual order.
+Markup Shorthands: markdown yes, css no
+Complain About: accidental-2119 yes, missing-example-ids yes
+Assume Explicit For: yes
+Die On: warning
+WPT Path Prefix: shadow-dom/focus-navigation/reading-flow/
+WPT Display: closed
+Include MDN Panels: if possible
+Include Can I Use Panels: yes
+</pre>
+
+Introduction {#intro}
+=====================
+
+For now, see the [explainer]([REPOSITORYURL]).
+
+See [https://garykac.github.io/procspec/](https://garykac.github.io/procspec/),
+[https://dlaliberte.github.io/bikeshed-intro/index.html](https://dlaliberte.github.io/bikeshed-intro/index.html),
+and [https://speced.github.io/bikeshed/](https://speced.github.io/bikeshed/) to get started on your
+specificaton.

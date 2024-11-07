@@ -1,3 +1,5 @@
+This proposal is an early design sketch by Blink DOM team to describe the problem below and solicit feedback on the proposed solution. It has not been approved to ship in Chrome.
+
 # CSS reading-flow Explainer
 
 Authors: Di Zhang, Mason Freed
@@ -178,32 +180,6 @@ A **reading-flow-ordered focus navigation scope** is a t whose focus navigation 
 - `A`, `B`, `C` are reading flow items and scope owners and their children are visited right after.
 - Focus order is C -> c -> A -> a -> B -> b.
 
-### Example - Complex combine all cases
-
-<img src="images/example-complex.png" width="800" />
-
-- Red boxes are reading flow container scope owners
-  - `wrapper` is a reading flow container
-    - Its "reading flow layout items" are A, C, F, H.
-    - Its "reading flow items" are A, Display: contents, Position: absolute, H.
-    - Its "reading flow layout order" is A -> Display: contents -> H -> position: absolute.
-  - `Display: contents` is a reading flow container scope owner
-    - Its "reading flow layout items" are A, C, F, H.
-    - Its "reading flow items" are C, F.
-    - Its "reading flow order" is F -> C.
-- Blue boxes area reading flow item scope owners
-  - `A`, `C`, `F`, `Position: absolute`, `H` are readi flow item scope owners and follow a normal tabindex-ordered focus navigation scope.
-- The focus order is: Wrapper -> A -> B -> Display: contents -> F -> C -> E -> D -> H -> position: absolute -> G
-
-### Example - Complex Shadow DOM combine all cases
-
-<img src="images/example-complex-shadow-dom.png" width="800" />
-
-Here is a Shadow DOM example, with the same focus navigation order. The wrapper is a shadow host and the display: contents div is a slot. Its content are slotted from the light DOM.
-Because a slot has CSS display: contents, it will follow a reading flow container scope navigation.
-
-- The focus order is: Shadow Host wrapper -> A -> B -> Slot -> F -> C -> E -> D -> H -> position: absolute -> G
-
 ### Example - `flex-visual` with focusable `display: contents`
 
 ```HTML
@@ -302,6 +278,32 @@ The focus order will be:
       - B1
 
 reading flow: C,A,B2,B1
+
+### Example - Complex combine all cases
+
+<img src="images/example-complex.png" width="800" />
+
+- Red boxes are reading flow container scope owners
+  - `wrapper` is a reading flow container
+    - Its "reading flow layout items" are A, C, F, H.
+    - Its "reading flow items" are A, Display: contents, Position: absolute, H.
+    - Its "reading flow layout order" is A -> Display: contents -> H -> position: absolute.
+  - `Display: contents` is a reading flow container scope owner
+    - Its "reading flow layout items" are A, C, F, H.
+    - Its "reading flow items" are C, F.
+    - Its "reading flow order" is F -> C.
+- Blue boxes area reading flow item scope owners
+  - `A`, `C`, `F`, `Position: absolute`, `H` are readi flow item scope owners and follow a normal tabindex-ordered focus navigation scope.
+- The focus order is: Wrapper -> A -> B -> Display: contents -> F -> C -> E -> D -> H -> position: absolute -> G
+
+### Example - Complex Shadow DOM combine all cases
+
+<img src="images/example-complex-shadow-dom.png" width="800" />
+
+Here is a Shadow DOM example, with the same focus navigation order. The wrapper is a shadow host and the display: contents div is a slot. Its content are slotted from the light DOM.
+Because a slot has CSS display: contents, it will follow a reading flow container scope navigation.
+
+- The focus order is: Shadow Host wrapper -> A -> B -> Slot -> F -> C -> E -> D -> H -> position: absolute -> G
 
 ## List of relevant issues
 
